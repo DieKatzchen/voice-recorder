@@ -24,7 +24,7 @@ from tkinter import filedialog, ttk
 _DIR = Path(__file__).parent
 
 # Regex for prompt lines
-_ARCTIC_LINE = re.compile(r'^\s*\(\s*([^ ]+)\s+"([^"]+)"\s*\)\s*$')
+_ARCTIC_LINE = re.compile(r'^\s*\s*(.+)\|(.+)\|.+')
 
 # Shared logger
 _LOGGER = logging.getLogger("record")
@@ -66,7 +66,7 @@ def main():
     parser.add_argument(
         "--device", default="default", help="Name of ALSA recording device"
     )
-    parser.add_argument("--prompts", default="prompts.csv", help="File with prompts (CMU Arctic format)")
+    parser.add_argument("--prompts", default="metadata.csv", help="File with prompts (CMU Arctic format)")
     parser.add_argument("--wav", default="recordings", help="Directory to store WAV files")
     parser.add_argument(
         "--record-command",
@@ -122,9 +122,9 @@ def main():
 
     # id -> text
     prompts: typing.Dict[str, str] = {}
-    with open(args.prompts, "r") as prompts_file:
+    with open(args.prompts, "r", encoding="utf8") as prompts_file:
         for line in prompts_file:
-            line = line.strip()
+            #line = line.strip()
             if line:
                 # ( prompt_id "Text for prompt" )
                 match = _ARCTIC_LINE.match(line)
@@ -232,7 +232,8 @@ def main():
         if last_wav_path and last_wav_path.is_file():
             threading.Thread(
                 target=lambda: subprocess.check_call(
-                    shlex.split(play_cmd_format.format(path=str(last_wav_path.absolute())))
+                    shlex.split(play_cmd_format.format(path=str(last_wav_path.absolute()))),
+                    shell=True
                 )
             ).start()
 
@@ -342,7 +343,7 @@ def recording_proc(args: argparse.Namespace):
             record_env["AUDIODEV"] = args.device
 
         # Start recording process
-        proc = subprocess.Popen(record_cmd, stdout=subprocess.PIPE, env=record_env)
+        proc = subprocess.Popen(record_cmd, stdout=subprocess.PIPE, env=record_env, shell=True)
         assert proc.stdout, "No stdout"
         record_wave_file = None
 
