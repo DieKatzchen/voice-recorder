@@ -46,7 +46,7 @@ _SAMPLE_CHANNELS = 2
 # Overridden when not one of these names.
 _RECORD_COMMANDS = {
     "arecord": "arecord -q -r {rate} -f S16_LE -c {channels} -D '{device}' -t raw",
-    "sox": "/usr/local/bin/rec -q -r {rate} -b {width_bits} -c {channels} -t raw -",
+    "sox": "rec.exe -q -r {rate} -b {width_bits} -c {channels} -t raw -",
 }
 
 # Format strings for common playback commands.
@@ -54,7 +54,7 @@ _RECORD_COMMANDS = {
 # Overridden when not one of these names.
 _PLAY_COMMANDS = {
     "aplay": "aplay -q '{path}'",
-    "sox": "/usr/local/bin/play -q '{path}'",
+    "sox": "play.exe -q '{path}'",
 }
 
 # -----------------------------------------------------------------------------
@@ -66,17 +66,17 @@ def main():
     parser.add_argument(
         "--device", default="default", help="Name of ALSA recording device"
     )
-    parser.add_argument("--prompts", help="File with prompts (CMU Arctic format)")
-    parser.add_argument("--wav", help="Directory to store WAV files")
+    parser.add_argument("--prompts", default="prompts.csv", help="File with prompts (CMU Arctic format)")
+    parser.add_argument("--wav", default="recordings", help="Directory to store WAV files")
     parser.add_argument(
         "--record-command",
-        default="arecord",
+        default="sox",
         help="arecord, sox, or format string for recording command. "
         + "Takes {rate}, {width_bytes}, {width_bits}, {channles}, and {device}",
     )
     parser.add_argument(
         "--play-command",
-        default="aplay",
+        default="sox",
         help="aplay, sox, or format string for playback command. "
         + "Takes {path} for WAV file",
     )
@@ -93,7 +93,7 @@ def main():
     window = tk.Tk()
     window.title("Voice Recorder")
 
-    if args.prompts is None:
+    if not Path(args.prompts).exists():
         # Get prompts file from dialog box
         args.prompts = filedialog.askopenfilename(
             master=window, title="Select prompts file", filetypes=[("All files", "*")]
@@ -101,11 +101,11 @@ def main():
 
     assert args.prompts, "No prompts file"
 
-    if args.wav is None:
+    #if args.wav is None:
         # Get WAV directory from dialog box
-        args.wav = filedialog.askdirectory(
-            master=window, title="Select WAV directory", mustexist=False
-        )
+        #args.wav = filedialog.askdirectory(
+            #master=window, title="Select WAV directory", mustexist=False
+        #)
 
     assert args.wav, "No WAV directory"
 
@@ -228,14 +228,11 @@ def main():
         """Play last recorded WAV file"""
         nonlocal last_wav_path
         play_cmd_format = _PLAY_COMMANDS.get(args.play_command, args.play_command)
-
         print(last_wav_path)
         if last_wav_path and last_wav_path.is_file():
             threading.Thread(
                 target=lambda: subprocess.check_call(
-                    shlex.split(
-                        play_cmd_format.format(path=str(last_wav_path.absolute()))
-                    )
+                    shlex.split(play_cmd_format.format(path=str(last_wav_path.absolute())))
                 )
             ).start()
 
@@ -340,7 +337,7 @@ def recording_proc(args: argparse.Namespace):
         _LOGGER.debug(record_cmd)
 
         record_env = {}
-        if args.device != "default":
+        if args.device == "default":
             # for sox
             record_env["AUDIODEV"] = args.device
 
