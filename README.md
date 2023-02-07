@@ -2,19 +2,20 @@
 
 Small [tkinter](https://wiki.python.org/moin/TkInter) Python program for recording voice samples.
 
-Uses [`arecord`](https://linux.die.net/man/1/arecord) to record audio, and expects prompts to be in the same format as [CMU Arctic](http://www.festvox.org/cmu_arctic/):
+Uses [`sox`](https://sox.sourceforge.net/) to record audio, and expects prompts to be in the same format as [CMU Arctic](http://www.festvox.org/cmu_arctic/):
 
 ```
 ( prompt_id1 "Text of prompt 1" )
 ( prompt_id2 "Text of prompt 2" )
 ...
 ```
-
 ![Recording screenshot](img/screenshot.png)
 
 ## Running
 
 Run from a terminal:
+
+Sox 14.4.1 (not 14.4.2) must be placed in the same directory. Copy sox.exe to rec.exe and play.exe.
 
 ```sh
 $ python3 record.py --device <DEVICE> --prompts <PROMPTS> --wav <WAV>
